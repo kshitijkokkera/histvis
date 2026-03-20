@@ -16,19 +16,9 @@ from typing import Dict, List, Optional, Union
 import numpy as np
 import pandas as pd
 
+from histvis.utils import load_npy, load_markers
+
 logger = logging.getLogger(__name__)
-
-
-def _load_npy(path: Union[str, Path]) -> np.ndarray:
-    arr = np.load(str(path))
-    return arr.astype(np.float32)
-
-
-def _load_markers(run_dir: Path) -> List[str]:
-    markers_file = run_dir / "markers.txt"
-    if markers_file.exists():
-        return [m.strip() for m in markers_file.read_text().splitlines() if m.strip()]
-    return []
 
 
 def _morans_i(arr: np.ndarray, eps: float = 1e-8) -> float:
@@ -135,9 +125,9 @@ def calculate_metrics(
             logger.warning("Skipping %s – required files not found", rp)
             continue
 
-        gt = _load_npy(gt_path)
-        pred = _load_npy(pred_path)
-        markers = _load_markers(rp)
+        gt = load_npy(gt_path)
+        pred = load_npy(pred_path)
+        markers = load_markers(rp)
         n_markers = gt.shape[-1] if gt.ndim == 3 else 1
         if not markers:
             markers = [f"marker_{i}" for i in range(n_markers)]

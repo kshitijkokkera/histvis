@@ -14,19 +14,9 @@ from typing import List, Optional, Union
 
 import numpy as np
 
+from histvis.utils import load_npy, load_markers
+
 logger = logging.getLogger(__name__)
-
-
-def _load_npy(path: Union[str, Path]) -> np.ndarray:
-    arr = np.load(str(path))
-    return arr.astype(np.float32)
-
-
-def _load_markers(run_dir: Path) -> List[str]:
-    markers_file = run_dir / "markers.txt"
-    if markers_file.exists():
-        return [m.strip() for m in markers_file.read_text().splitlines() if m.strip()]
-    return []
 
 
 def generate_scatter_plots(
@@ -86,15 +76,15 @@ def generate_scatter_plots(
         if not gt_path.exists() or not pred_path.exists():
             logger.warning("Skipping %s – required files not found", rp)
             continue
-        gts.append(_load_npy(gt_path))
-        preds.append(_load_npy(pred_path))
+        gts.append(load_npy(gt_path))
+        preds.append(load_npy(pred_path))
         labels.append(rp.name)
 
     if not gts:
         logger.error("No valid run directories found – aborting scatter plot generation")
         return out_dir
 
-    markers = _load_markers(run_paths[0])
+    markers = load_markers(run_paths[0])
     n_markers = gts[0].shape[-1] if gts[0].ndim == 3 else 1
     if not markers:
         markers = [f"marker_{i}" for i in range(n_markers)]

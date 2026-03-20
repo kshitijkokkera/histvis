@@ -10,19 +10,22 @@ readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
     "textual>=0.47.0",
-    "numpy",
-    "matplotlib",
-    "scipy",
-    "pandas",
-    "torch",
-    "torchvision",
-    "tifffile",
-    "zarr",
-    "opencv-python",
-    "tqdm",
-    "imagecodecs",
-    "scikit-learn",
+    "numpy>=1.24.0",
+    "matplotlib>=3.7.0",
+    "scipy>=1.10.0",
+    "pandas>=2.0.0",
+    "torch>=2.0.0",
+    "torchvision>=0.15.0",
+    "tifffile>=2023.1.1",
+    "zarr>=2.14.0",
+    "opencv-python>=4.7.0",
+    "tqdm>=4.65.0",
+    "imagecodecs>=2023.1.1",
+    "scikit-learn>=1.2.0",
 ]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0.0"]
 
 [project.scripts]
 histvis = "histvis.cli:main"
