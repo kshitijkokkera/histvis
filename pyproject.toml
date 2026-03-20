@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "histvis"
+version = "0.1.0"
+description = "Helioscope TUI - Terminal UI for helioscope-core inference and analysis"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "textual>=0.47.0",
+    "numpy",
+    "matplotlib",
+    "scipy",
+    "pandas",
+    "torch",
+    "torchvision",
+    "tifffile",
+    "zarr",
+    "opencv-python",
+    "tqdm",
+    "imagecodecs",
+    "scikit-learn",
+]
+
+[project.scripts]
+histvis = "histvis.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
