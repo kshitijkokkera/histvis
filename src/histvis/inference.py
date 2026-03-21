@@ -69,15 +69,14 @@ def run_inference(
         # Load model
         # ------------------------------------------------------------------
         logger.info("Loading model from checkpoint …")
-        checkpoint = torch.load(checkpoint_path, map_location=device)
+        checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=True)
 
-        # The checkpoint may store the model under different keys depending
-        # on the training framework used by helioscope-core.
-        state_dict = (
-            checkpoint.get("model_state_dict")
-            or checkpoint.get("state_dict")
-            or checkpoint
-        )
+        # TODO: Instantiate and load the model once helioscope-core is integrated.
+        # state_dict = (
+        #     checkpoint.get("model_state_dict")
+        #     or checkpoint.get("state_dict")
+        #     or checkpoint
+        # )
 
         # ------------------------------------------------------------------
         # Parse region coordinates

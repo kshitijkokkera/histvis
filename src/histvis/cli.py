@@ -17,8 +17,6 @@ Scenario support (multiple GTs / multiple Preds):
 from __future__ import annotations
 
 import logging
-import os
-import threading
 from pathlib import Path
 from typing import List, Optional
 
@@ -41,6 +39,8 @@ from textual.widgets import (
     TabbedContent,
     TabPane,
 )
+
+logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -434,8 +434,8 @@ class HistVisApp(App):
                     "region_coords": region_coords,
                     "gt_path": gt_path,
                 })
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.warning("Failed to parse entry row %s: %s", row_id, exc)
         return entries
 
     def _collect_model_entries(self) -> List[dict]:
@@ -454,8 +454,8 @@ class HistVisApp(App):
                     "checkpoint_path": checkpoint_path,
                     "label": label,
                 })
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.warning("Failed to parse entry row %s: %s", row_id, exc)
         return entries
 
     def _get_workflow_mode(self) -> str:
@@ -478,17 +478,46 @@ class HistVisApp(App):
         summary_path = self.query_one("#summary-path", Input).value.strip() or None
         split_file = self.query_one("#split-file", Input).value.strip() or None
         device = self.query_one("#device", Input).value.strip() or "cuda"
+        scenario = self.query_one("#scenario-select", Select).value
+
+        log_widget = self.query_one("#log-output", RichLog)
 
         if not output_dir:
-            self.query_one("#log-output", RichLog).write(
+            log_widget.write(
                 "[bold red]Error: Output Directory is required.[/bold red]"
             )
             self.query_one("#tabs").active = "tab-log"
             return
 
+        # Scenario-specific validation warnings
+        if scenario == "single":
+            if len(slides) > 1:
+                log_widget.write(
+                    "[yellow]Warning: Single Run scenario expects 1 slide entry; "
+                    f"{len(slides)} configured.[/yellow]"
+                )
+            if len(models) > 1:
+                log_widget.write(
+                    "[yellow]Warning: Single Run scenario expects 1 model entry; "
+                    f"{len(models)} configured.[/yellow]"
+                )
+        elif scenario == "batch":
+            if len(models) > 1:
+                log_widget.write(
+                    "[yellow]Warning: Batch Processing scenario expects 1 model entry; "
+                    f"{len(models)} configured.[/yellow]"
+                )
+        elif scenario == "model_compare":
+            if len(slides) > 1:
+                log_widget.write(
+                    "[yellow]Warning: Model Comparison scenario expects 1 slide entry; "
+                    f"{len(slides)} configured.[/yellow]"
+                )
+
         self.query_one("#tabs").active = "tab-log"
         self._run_workflow(
             mode=mode,
+            scenario=str(scenario),
             slides=slides,
             models=models,
             output_dir=output_dir,
@@ -502,6 +531,7 @@ class HistVisApp(App):
     def _run_workflow(
         self,
         mode: str,
+        scenario: str,
         slides: List[dict],
         models: List[dict],
         output_dir: str,
@@ -511,9 +541,8 @@ class HistVisApp(App):
         device: str,
     ) -> None:
         """Background worker that runs the selected workflow."""
-        logger = logging.getLogger(__name__)
         logger.info("=" * 60)
-        logger.info("Starting workflow  mode=%s", mode)
+        logger.info("Starting workflow  mode=%s  scenario=%s", mode, scenario)
         logger.info("  Slides : %d", len(slides))
         logger.info("  Models : %d", len(models))
         logger.info("  Output : %s", output_dir)
@@ -580,7 +609,7 @@ class HistVisApp(App):
                 try:
                     from histvis.eval_errors import generate_error_maps
                     logger.info("Generating error maps …")
-                    generate_error_maps(run_dirs=run_dirs, output_dir=output_dir + "/error_maps")
+                    generate_error_maps(run_dirs=run_dirs, output_dir=str(Path(output_dir) / "error_maps"))
                 except Exception as exc:
                     logger.error("Error map generation failed: %s", exc, exc_info=True)
 
@@ -588,7 +617,7 @@ class HistVisApp(App):
                 try:
                     from histvis.eval_metrics import calculate_metrics
                     logger.info("Calculating metrics …")
-                    df = calculate_metrics(run_dirs=run_dirs, output_dir=output_dir + "/metrics")
+                    df = calculate_metrics(run_dirs=run_dirs, output_dir=str(Path(output_dir) / "metrics"))
                     if not df.empty:
                         logger.info("Metrics summary:\n%s", df.to_string(index=False))
                 except Exception as exc:
@@ -598,7 +627,7 @@ class HistVisApp(App):
                 try:
                     from histvis.eval_scatter import generate_scatter_plots
                     logger.info("Generating scatter plots …")
-                    generate_scatter_plots(run_dirs=run_dirs, output_dir=output_dir + "/scatter")
+                    generate_scatter_plots(run_dirs=run_dirs, output_dir=str(Path(output_dir) / "scatter"))
                 except Exception as exc:
                     logger.error("Scatter plot generation failed: %s", exc, exc_info=True)
 

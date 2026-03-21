@@ -1,0 +1,29 @@
+# Python artifacts
+__pycache__/
+*.py[cod]
+*.pyo
+.eggs/
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# ML artifacts
+*.pth
+*.pt
+*.npy
+*.onnx
+
+# Editor / OS artifacts
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Output directories
+outputs/
+runs/
